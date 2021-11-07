@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
-from pages.classes.opensea_class import OpeanseaAssets, OpenseaEvents, OpenseaCollections, OpenseaBundles
 import pages.config.opensea_config as default
+import pandas_profiling
+
+from pages.classes.opensea_class import OpeanseaAssets, OpenseaEvents, OpenseaCollections, OpenseaBundles
+from streamlit_pandas_profiling import st_profile_report
 
 
 def app():
@@ -133,8 +136,18 @@ def app():
                     st.markdown('### Display Data')
                     if default.VERBOSITY != 0:
                         st.dataframe(df.head(default.VERBOSITY))
+                        with st.expander('Show Advanced Statistics'):
+                            st_profile_report(df.head(default.VERBOSITY).profile_report(
+                                explorative=True,
+                                minimal=True
+                            ))
                     else:
                         st.dataframe(df)
+                        with st.expander('Show Advanced Statistics'):
+                            st_profile_report(df.profile_report(
+                                explorative=True,
+                                minimal=True
+                            ))
 
     elif default.RETRIEVAL_METHOD == 'Events':
         pass
