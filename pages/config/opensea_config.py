@@ -20,7 +20,8 @@ OWNER = None
 TOKEN_ID = None
 TOKEN_IDS = None
 RETRIEVAL_METHOD = 'Assets'
-GET_ALL = True
+GET_ALL = False
+ADVANCED = False
 
 # change any of the following to modify the behavior of the app
 SAVE = True
