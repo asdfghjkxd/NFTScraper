@@ -1,106 +1,113 @@
 import datetime
-from typing import Optional
-import requests as r
+import os
+import time
+
+import aiohttp
+import requests
 import pandas as pd
 import json
 import logging
+import asyncio
+import pages.config.opensea_config as default
+
+from typing import Optional
+from utils.utils import assertType
 
 
 class Opensea:
     """
     The Parent Class which defines all the params and common function used by all child classes
     """
+
     def __init__(self):
         """
         Define the static types that will be used in the app
         """
+
         # scraper params
-        self.account_address_type = Optional[str]
-        self.api_key_type = Optional[str]
-        self.asset_contract_address_type = Optional[str]
-        self.asset_contract_addresses_type = Optional[list]
-        self.asset_owner_type = Optional[str]
-        self.auction_type_type = Optional[str]
-        self.auction_type_conditions = ['english', 'dutch', 'min-price']
-        self.collection_type = Optional[str]
-        self.collection_slug_type = Optional[str]
-        self.event_type_type = Optional[str]
+        self.account_address_type = (str, type(None))
+        self.api_key_type = (str, type(None))
+        self.asset_contract_address_type = (str, type(None))
+        self.asset_contract_addresses_type = (str, type(None))
+        self.asset_owner_type = (str, type(None))
+        self.auction_type_type = (str, type(None))
+        self.auction_type_conditions = ['english', 'dutch', 'min-price', None]
+        self.collection_type = (str, type(None))
+        self.collection_slug_type = (str, type(None))
+        self.event_type_type = (str, type(None))
         self.event_type_conditions = ['created', 'successful', 'cancelled', 'bid_entered', 'bid_withdrawn', 'transfer',
-                                      'approve']
+                                      'approve', None]
         self.limit_type = int
         self.limit_type_conditions = range(1, 50)
-        self.occurred_after_type = datetime.datetime
-        self.occurred_before_type = datetime.datetime
+        self.occurred_after_type = (str, type(None))
+        self.occurred_before_type = (str, type(None))
         self.offset_type = int
         self.offset_type_conditions = range(0, 10000)
-        self.on_sale_type = Optional[bool]
+        self.on_sale_type = (bool, type(None))
         self.only_opensea_type = bool
-        self.order_by_type = Optional[str]
-        self.order_by_conditions = ['token_id', 'sale_date', 'sale_count', 'sale_price']
+        self.order_by_type = (str, type(None))
+        self.order_by_conditions = ['token_id', 'sale_date', 'sale_count', 'sale_price', None]
         self.order_direction_type = str
         self.order_direction_conditions = ['asc', 'desc']
-        self.owner_type = Optional[str]
-        self.token_id_type = Optional[int]
-        self.token_ids_type = Optional[list]
+        self.owner_type = (str, type(None))
+        self.token_id_type = (str, type(None))
+        self.token_ids_type = (str, type(None))
 
         # app params
-        self.finalised = dict()
-        self.param_counter = 0
-        self.response = None
-        self.response_text = None
-        self.response_frame = pd.DataFrame
+        # self.params shall be a list of dicts, each containing the key-value pair tagged to a particular url loop
+        self.temp_url = ''
+        self.URLs = []
+        self.endpoint = ''
+        self.response_frame = pd.DataFrame()
+        self.responses = []
 
-    def assertType(self, default, test, conditions=None):
-        if isinstance(type(default), type(test)):
-            if conditions is not None:
-                if test in conditions:
-                    return True
-                else:
-                    raise AssertionError(f'Error: {test} is not one of the accepted parameter {conditions}')
-            else:
-                return True
-        # else:
-        #     raise AssertionError(f'Error: {type(test)} is not the same as {type(default)}. Try again.')
-
-    def constructRequest(self):
-        for k, v in self.finalised.items():
-            self.param_counter += 1
-            if v is not None:
-                if self.param_counter == 1:
-                    self.endpoint = f'{self.endpoint}?{k}={v}'
-                if self.param_counter > 1:
-                    self.endpoint = f'{self.endpoint}&{k}={v}'
-
-    def sendRequest(self):
-        self.response = r.request('GET', self.endpoint)
-        if self.response.status_code == 400:
-            logging.error('Crawl Not Successful')
-
-    def parseRequest(self):
-        self.response_text = json.loads(self.response.text)
-        for k, v in self.response_text.items():
-            self.response_frame = pd.DataFrame.from_dict(data=v,
-                                                         orient='columns').astype(str)
-
-
-class OpeanseaAssets(Opensea):
-    """
-    This class manages the pulling of assets from Opensea
-    """
-
-    def __init__(self,
-                 owner: Optional[str] = None,
-                 token_ids: Optional[list] = None,
-                 asset_contract_address: Optional[str] = None,
-                 asset_contract_addresses: Optional[list] = None,
-                 order_by: Optional[str] = None,
-                 order_direction: str = 'desc',
-                 offset: int = 0,
-                 limit: int = 20,
-                 collection: Optional[str] = None,
-                 api_key: Optional[str] = None):
+    def loadAndSendPayload(self):
         """
-        Gets and sets the variables for the OpenseaAsset class
+        Loads up the requests and prepares them for asynchronous request sending
+        """
+        os.system(f'python utils/async_requests.py {self.URLs}')
+
+    def resetAll(self):
+        """
+        Function to quickly reset all the relevant class attributes in the deinit or reset process
+        """
+
+        self.temp_url = ''
+        self.URLs = []
+        self.response_frame = pd.DataFrame()
+        self.responses = []
+
+
+class Assets(Opensea):
+    """
+    Class to API calls for Opensea Assets
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.endpoint = 'https://api.opensea.io/api/v1/assets'
+
+    def setAssetParameters(self,
+                           owner: Optional[str] = None,
+                           token_ids: Optional[list] = None,
+                           asset_contract_address: Optional[str] = None,
+                           asset_contract_addresses: Optional[list] = None,
+                           order_by: Optional[str] = None,
+                           order_direction: str = 'desc',
+                           offset: int = 0,
+                           limit: int = 20,
+                           collection: Optional[str] = None,
+                           api_key: Optional[str] = None
+                           ):
+        """
+        Gets and sets the variables for the OpenseaAsset class; setting parameters are separate from __init__ so that
+        users can conduct multiple queries by getting the maximum number of API calls permitted for Opensea.io, which
+        requires this function so that the requests can be sent and obtained asynchronously
+
+        Initial call of the class will not set the variables per default as defined in opensea_config. You must set
+        the parameters of the function manually through setParameters. This is to ensure that async works perfectly,
+        and that your final url list consists of only parameters you want to parse, and not unwanted parameters from
+        the initial call to the class
 
         :param owner:                               The address of the owner of the assets
         :param token_ids:                           An array of token IDs to search for
@@ -117,69 +124,122 @@ class OpeanseaAssets(Opensea):
         :param api_key:                             API Key
         """
 
-        super().__init__()
-        self.endpoint = 'https://api.opensea.io/api/v1/assets'
-        self.finalised = {}
-        self.param_counter = 0
+        param = {}
+        temp = ''
 
-        if self.assertType(self.owner_type, owner):
-            self.finalised['owner'] = owner
+        if assertType(self.owner_type, owner):
+            if owner is not None:
+                param['owner'] = owner
 
-        if self.assertType(self.token_ids_type, token_ids):
-            self.finalised['token_ids'] = token_ids
+        if assertType(self.token_ids_type, token_ids):
+            if token_ids is not None:
+                param['token_ids'] = token_ids
 
-        if self.assertType(self.asset_contract_address_type, asset_contract_address):
+        if assertType(self.asset_contract_address_type, asset_contract_address):
             if asset_contract_addresses is None:
-                self.finalised['asset_contract_address'] = asset_contract_address
+                if asset_contract_address is not None:
+                    param['asset_contract_address'] = asset_contract_address
             else:
                 raise AssertionError('Error: Cannot define two separate queries for Asset Contract Address.')
 
-        if self.assertType(self.asset_contract_addresses_type, asset_contract_addresses):
+        if assertType(self.asset_contract_addresses_type, asset_contract_addresses):
             if asset_contract_address is None:
-                self.finalised['asset_contract_addresses'] = asset_contract_addresses
+                if asset_contract_addresses is not None:
+                    param['asset_contract_addresses'] = asset_contract_addresses
             else:
                 raise AssertionError('Error: Cannot define two separate queries for Asset Contract Address.')
 
-        if self.assertType(self.order_by_type, order_by, conditions=self.order_by_conditions):
-            if type(order_by) is not None:
-                self.finalised['order_by'] = order_by.lower().strip()
+        if assertType(self.order_by_type, order_by, conditions=self.order_by_conditions):
+            if order_by is not None:
+                param['order_by'] = order_by
 
-        if self.assertType(self.order_direction_type, order_direction.lower().strip(),
-                           conditions=self.order_direction_conditions):
-            self.finalised['order_direction'] = order_direction.lower().strip()
+        if assertType(self.order_direction_type, order_direction,
+                      conditions=self.order_direction_conditions):
+            if order_direction is not None:
+                param['order_direction'] = order_direction.lower().strip()
 
-        if self.assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
-            self.finalised['offset'] = offset
+        if assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
+            param['offset'] = offset
 
-        if self.assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
-            self.finalised['limit'] = limit
+        if assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
+            param['limit'] = limit
 
-        if self.assertType(self.collection_type, collection):
-            self.finalised['collection'] = collection
+        if assertType(self.collection_type, collection):
+            if collection is not None:
+                param['collection'] = collection
 
-        if self.assertType(self.api_key_type, api_key):
-            self.finalised['X-API-KEY'] = api_key
+        if assertType(self.api_key_type, api_key):
+            if api_key is not None:
+                param['X-API-KEY'] = api_key
 
+        for counter, (key, value) in enumerate(param.items()):
+            if counter == 0:
+                temp = temp + f'?{key}={value}'
+            elif counter > 0:
+                temp = temp + f'&{key}={value}'
 
-class OpenseaEvents(Opensea):
-    """
-    This class manages the pulling of assets from Opensea
-    """
-    def __init__(self,
-                 asset_contract_address: Optional[str] = None,
-                 collection_slug: Optional[str] = None,
-                 token_id: Optional[int] = None,
-                 account_address: Optional[str] = None,
-                 event_type: Optional[str] = None,
-                 only_opensea: bool = False,
-                 auction_type: Optional[str] = None,
-                 offset: int = 0,
-                 limit: int = 20,
-                 occurred_before: Optional[datetime.datetime] = None,
-                 occurred_after: Optional[datetime.datetime] = None,
-                 api_key: Optional[str] = None):
+        self.URLs.append(f'{self.endpoint}{temp}')
+
+    def parseResponse(self, timeout: int = 600):
         """
-        Gets and sets variables for the OpenseaEvents class
+        This parses the response object obtained from loadAndSendPayload()
+
+        :return:                        Complete Pandas DataFrame
+        """
+
+        counter = 0
+        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+
+        try:
+            if os.path.exists(base_filepath):
+                with open(f'{base_filepath}', 'r') as f:
+                    data = json.load(f)
+                    self.responses = data
+
+                main_list = []
+
+                for dict_item in self.responses:
+                    main_list.extend(dict_item['asset_events'])
+
+                self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            else:
+                time.sleep(1)
+                counter += 1
+
+            if counter > timeout:
+                raise TimeoutError('Error: File cannot be created. Try again.')
+
+        except Exception as ex:
+            raise ex
+
+
+class Events(Opensea):
+    def __init__(self):
+        super().__init__()
+        self.endpoint = 'https://api.opensea.io/api/v1/events'
+
+    def setEventsParameters(self,
+                            asset_contract_address: Optional[str] = None,
+                            collection_slug: Optional[str] = None,
+                            token_id: Optional[int] = None,
+                            account_address: Optional[str] = None,
+                            event_type: Optional[str] = None,
+                            only_opensea: bool = False,
+                            auction_type: Optional[str] = None,
+                            offset: int = 0,
+                            limit: int = 20,
+                            occurred_before: Optional[str] = None,
+                            occurred_after: Optional[str] = None,
+                            api_key: Optional[str] = None):
+        """
+        Gets and sets the variables for the OpenseaEvents class; setting parameters are separate from __init__ so that
+        users can conduct multiple queries by getting the maximum number of API calls permitted for Opensea.io, which
+        requires this function so that the requests can be sent and obtained asynchronously
+
+        Initial call of the class will not set the variables per default as defined in opensea_config. You must set
+        the parameters of the function manually through setParameters. This is to ensure that async works perfectly,
+        and that your final url list consists of only parameters you want to parse, and not unwanted parameters from
+        the initial call to the class
 
         :param asset_contract_address:              The NFT contract address for the assets for which to show events
         :param collection_slug:                     Limit responses to events from a collection
@@ -191,65 +251,123 @@ class OpenseaEvents(Opensea):
         :param offset:                              Offset for pagination
         :param limit:                               Limit for pagination
         :param occurred_before:                     Only show events listed before this timestamp; seconds since Unix
-                                                    epoch
+                                                   epoch
         :param occurred_after:                      Only show events listed after this timestamp; seconds since Unix
-                                                    epoch
+                                                   epoch
         :param api_key:                             API Key
         """
 
-        super().__init__()
-        self.endpoint = 'https://api.opensea.io/api/v1/events'
-        self.finalised = {}
-        self.param_counter = 0
+        param = {}
+        temp = ''
 
-        if self.assertType(self.asset_contract_address_type, asset_contract_address):
-            self.finalised['asset_contract_address'] = asset_contract_address
+        if assertType(self.asset_contract_address_type, asset_contract_address):
+            if asset_contract_address is not None:
+                param['asset_contract_address'] = asset_contract_address
 
-        if self.assertType(self.collection_slug_type, collection_slug):
-            self.finalised['collection_slug'] = collection_slug
+        if assertType(self.collection_slug_type, collection_slug):
+            if collection_slug is not None:
+                param['collection_slug'] = collection_slug
 
-        if self.assertType(self.token_id_type, token_id):
-            self.finalised['token_id'] = token_id
+        if assertType(self.token_id_type, token_id):
+            if token_id is not None:
+                param['token_id'] = token_id
 
-        if self.assertType(self.account_address_type, account_address):
-            self.finalised['account_address'] = account_address
+        if assertType(self.account_address_type, account_address):
+            if account_address is not None:
+                param['account_address'] = account_address
 
-        if self.assertType(self.event_type_type, event_type, conditions=self.event_type_conditions):
-            self.finalised['event_type'] = event_type
+        if assertType(self.event_type_type, event_type, conditions=self.event_type_conditions):
+            if event_type is not None:
+                param['event_type'] = event_type
 
-        if self.assertType(self.only_opensea_type, only_opensea):
-            self.finalised['only_opensea'] = only_opensea
+        if assertType(self.only_opensea_type, only_opensea):
+            if only_opensea is not None:
+                param['only_opensea'] = only_opensea
 
-        if self.assertType(self.auction_type_type, auction_type, conditions=self.auction_type_conditions):
-            self.finalised['auction_type'] = auction_type
+        if assertType(self.auction_type_type, auction_type, conditions=self.auction_type_conditions):
+            if auction_type is not None:
+                param['auction_type'] = auction_type
 
-        if self.assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
-            self.finalised['offset'] = offset
+        if assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
+            if offset is not None:
+                param['offset'] = offset
 
-        if self.assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
-            self.finalised['limit'] = limit
+        if assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
+            if limit is not None:
+                param['limit'] = limit
 
-        if self.assertType(self.occurred_before_type, occurred_before):
-            self.finalised['occurred_before'] = occurred_before
+        if assertType(self.occurred_before_type, occurred_before):
+            if occurred_before is not None:
+                param['occurred_before'] = occurred_before
 
-        if self.assertType(self.occurred_after_type, occurred_after):
-            self.finalised['occurred_after'] = occurred_after
+        if assertType(self.occurred_after_type, occurred_after):
+            if occurred_after is not None:
+                param['occurred_after'] = occurred_after
 
-        if self.assertType(self.api_key_type, api_key):
-            self.finalised['X-API-KEY'] = api_key
+        if assertType(self.api_key_type, api_key):
+            if api_key is not None:
+                param['X-API-KEY'] = api_key
 
+        for counter, (key, value) in enumerate(param.items()):
+            if counter == 0:
+                temp = temp + f'?{key}={value}'
+            elif counter > 0:
+                temp = temp + f'&{key}={value}'
 
-class OpenseaCollections(Opensea):
-    """
-    This class manages the pulling of collections from Opensea
-    """
-    def __init__(self,
-                 asset_owner: Optional[str] = None,
-                 offset: int = 0,
-                 limit: int = 20,
-                 api_key: Optional[str] = None):
+        self.URLs.append(f'{self.endpoint}{temp}')
+
+    def parseResponse(self, timeout: int = 600):
         """
-        Gets and sets variables for the OpenseaCollections class
+        This parses the response object obtained from loadAndSendPayload()
+
+        :return:                        Complete Pandas DataFrame
+        """
+
+        counter = 0
+        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+
+        try:
+            if os.path.exists(base_filepath):
+                with open(f'{base_filepath}', 'r') as f:
+                    data = json.load(f)
+                    self.responses = data
+
+                main_list = []
+
+                for dict_item in self.responses:
+                    main_list.extend(dict_item['events'])
+
+                self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            else:
+                time.sleep(1)
+                counter += 1
+
+            if counter > timeout:
+                raise TimeoutError('Error: File cannot be created. Try again.')
+
+        except Exception as ex:
+            raise ex
+
+
+class Collections(Opensea):
+    def __init__(self):
+        super().__init__()
+        self.endpoint = 'https://api.opensea.io/api/v1/collections'
+
+    def setCollectionsParameters(self,
+                                 asset_owner: Optional[str] = None,
+                                 offset: int = 0,
+                                 limit: int = 20,
+                                 api_key: Optional[str] = None):
+        """
+        Gets and sets the variables for the OpenseaCollections class; setting parameters are separate from __init__ so
+        that users can conduct multiple queries by getting the maximum number of API calls permitted for Opensea.io,
+        which requires this function so that the requests can be sent and obtained asynchronously
+
+        Initial call of the function will not set the variables per default as defined in opensea_config. You must set
+        the parameters of the function manually through setParameters. This is to ensure that async works perfectly,
+        and that your final url list consists of only parameters you want to parse, and not unwanted parameters from
+        the initial call to the class
 
         :param asset_owner:                         A wallet address. If specified, will return collections where
                                                     the owner owns at least one asset belonging to smart contracts
@@ -259,39 +377,90 @@ class OpenseaCollections(Opensea):
         :param api_key:                             API Key
         """
 
-        super().__init__()
-        self.endpoint = 'https://api.opensea.io/api/v1/events'
-        self.finalised = {}
-        self.param_counter = 0
+        param = {}
+        temp = ''
 
-        if self.assertType(self.asset_owner_type, asset_owner):
-            self.finalised['asset_owner'] = asset_owner
+        if assertType(self.asset_owner_type, asset_owner):
+            if asset_owner is not None:
+                param['asset_owner'] = asset_owner
 
-        if self.assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
-            self.finalised['offset'] = offset
+        if assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
+            if offset is not None:
+                param['offset'] = offset
 
-        if self.assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
-            self.finalised['limit'] = limit
+        if assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
+            if limit is not None:
+                param['limit'] = limit
 
-        if self.assertType(self.api_key_type, api_key):
-            self.finalised['X-API-KEY'] = api_key
+        if assertType(self.api_key_type, api_key):
+            if api_key is not None:
+                param['X-API-KEY'] = api_key
 
+        for counter, (key, value) in enumerate(param.items()):
+            if counter == 0:
+                temp = temp + f'?{key}={value}'
+            elif counter > 0:
+                temp = temp + f'&{key}={value}'
 
-class OpenseaBundles(Opensea):
-    """
-    This class manages the pulling of bundles from Opensea
-    """
-    def __init__(self,
-                 on_sale: Optional[bool] = None,
-                 owner: Optional[str] = None,
-                 asset_contract_address: Optional[str] = None,
-                 asset_contract_addresses: Optional[list] = None,
-                 token_ids: Optional[list] = None,
-                 offset: int = 0,
-                 limit: int = 20,
-                 api_key: Optional[str] = None):
+        self.URLs.append(f'{self.endpoint}{temp}')
+
+    def parseResponse(self, timeout: int = 600):
         """
-        Gets and sets variables for the OpenseaBundles class
+        This parses the response object obtained from loadAndSendPayload()
+
+        :return:                        Complete Pandas DataFrame
+        """
+
+        counter = 0
+        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+
+        try:
+            if os.path.exists(base_filepath):
+                with open(f'{base_filepath}', 'r') as f:
+                    data = json.load(f)
+                    self.responses = data
+
+                main_list = []
+
+                for dict_item in self.responses:
+                    main_list.extend(dict_item['collections'])
+
+                self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            else:
+                time.sleep(1)
+                counter += 1
+
+            if counter > timeout:
+                raise TimeoutError('Error: File cannot be created. Try again.')
+
+        except Exception as ex:
+            raise ex
+
+
+class Bundles(Opensea):
+    def __init__(self):
+        super().__init__()
+        self.endpoint = 'https://api.opensea.io/api/v1/bundles'
+
+    def setBundlesParameter(self,
+                            on_sale: Optional[bool] = None,
+                            owner: Optional[str] = None,
+                            asset_contract_address: Optional[str] = None,
+                            asset_contract_addresses: Optional[list] = None,
+                            token_ids: Optional[list] = None,
+                            offset: int = 0,
+                            limit: int = 20,
+                            api_key: Optional[str] = None):
+        """
+        Gets and sets variables for the OpenseaBundles class; setting parameters are separate from __init__ so that
+        users can conduct multiple queries by getting the maximum number of API calls permitted for Opensea.io, which
+        requires this function so that the requests can be sent and obtained asynchronously
+
+        Initial call of the function will set the variables per default as defined in opensea_config. This behaviour
+        can be overwritten by altering the default values in the config file before calling this Class
+
+        Call this function after __init__ to reset variables according to your own specifications; if no changes were
+        made, then the default parameters will run
 
         :param on_sale:                             If set to true, only show bundles currently on sale. If set to
                                                     false, only show bundles that have been sold or cancelled.
@@ -305,37 +474,83 @@ class OpenseaBundles(Opensea):
         :param api_key:                             API Key
         """
 
-        super().__init__()
-        self.endpoint = 'https://api.opensea.io/api/v1/bundles'
-        self.finalised = {}
-        self.param_counter = 0
+        param = {}
+        temp = ''
 
-        if self.assertType(self.on_sale_type, on_sale):
-            self.finalised['on_sale'] = on_sale
+        if assertType(self.on_sale_type, on_sale):
+            if on_sale is not None:
+                param['on_sale'] = on_sale
 
-        if self.assertType(self.owner_type, owner):
-            self.finalised['owner'] = owner
+        if assertType(self.owner_type, owner):
+            if owner is not None:
+                param['owner'] = owner
 
-        if self.assertType(self.asset_contract_address_type, asset_contract_address):
+        if assertType(self.asset_contract_address_type, asset_contract_address):
             if asset_contract_addresses is None:
-                self.finalised['asset_contract_address'] = asset_contract_address
+                if asset_contract_address is not None:
+                    param['asset_contract_address'] = asset_contract_address
             else:
                 raise AssertionError('Error: Cannot define two separate queries for Asset Contract Address.')
 
-        if self.assertType(self.asset_contract_addresses_type, asset_contract_addresses):
+        if assertType(self.asset_contract_addresses_type, asset_contract_addresses):
             if asset_contract_address is None:
-                self.finalised['asset_contract_addresses'] = asset_contract_addresses
+                if asset_contract_addresses is not None:
+                    param['asset_contract_addresses'] = asset_contract_addresses
             else:
                 raise AssertionError('Error: Cannot define two separate queries for Asset Contract Address.')
 
-        if self.assertType(self.token_id_type, token_ids):
-            self.finalised['token_ids'] = token_ids
+        if assertType(self.token_id_type, token_ids):
+            if token_ids is not None:
+                param['token_ids'] = token_ids
 
-        if self.assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
-            self.finalised['offset'] = offset
+        if assertType(self.offset_type, offset, conditions=self.offset_type_conditions):
+            if offset is not None:
+                param['offset'] = offset
 
-        if self.assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
-            self.finalised['limit'] = limit
+        if assertType(self.limit_type, limit, conditions=self.limit_type_conditions):
+            if limit is not None:
+                param['limit'] = limit
 
-        if self.assertType(self.api_key_type, api_key):
-            self.finalised['X-API-KEY'] = api_key
+        if assertType(self.api_key_type, api_key):
+            if api_key is not None:
+                param['X-API-KEY'] = api_key
+
+        for counter, (key, value) in enumerate(param.items()):
+            if counter == 0:
+                temp = temp + f'?{key}={value}'
+            elif counter > 0:
+                temp = temp + f'&{key}={value}'
+
+        self.URLs.append(f'{self.endpoint}{temp}')
+
+    def parseResponse(self, timeout: int = 600):
+        """
+        This parses the response object obtained from loadAndSendPayload()
+
+        :return:                        Complete Pandas DataFrame
+        """
+
+        counter = 0
+        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+
+        try:
+            if os.path.exists(base_filepath):
+                with open(f'{base_filepath}', 'r') as f:
+                    data = json.load(f)
+                    self.responses = data
+
+                main_list = []
+
+                for dict_item in self.responses:
+                    main_list.extend(dict_item['bundles'])
+
+                self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            else:
+                time.sleep(1)
+                counter += 1
+
+            if counter > timeout:
+                raise TimeoutError('Error: File cannot be created. Try again.')
+
+        except Exception as ex:
+            raise ex
