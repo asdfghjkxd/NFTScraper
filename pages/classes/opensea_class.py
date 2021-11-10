@@ -199,7 +199,7 @@ class Assets(Opensea):
                 main_list = []
 
                 for dict_item in self.responses:
-                    main_list.extend(dict_item['asset_events'])
+                    main_list.extend(dict_item['assets'])
 
                 self.response_frame = pd.DataFrame(data=main_list).astype(str)
             else:
@@ -335,7 +335,7 @@ class Events(Opensea):
                 main_list = []
 
                 for dict_item in self.responses:
-                    main_list.extend(dict_item['events'])
+                    main_list.extend(dict_item['asset_events'])
 
                 self.response_frame = pd.DataFrame(data=main_list).astype(str)
             else:
