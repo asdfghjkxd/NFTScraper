@@ -38,7 +38,7 @@ class Opensea:
         self.event_type_conditions = ['created', 'successful', 'cancelled', 'bid_entered', 'bid_withdrawn', 'transfer',
                                       'approve', None]
         self.limit_type = int
-        self.limit_type_conditions = range(1, 50)
+        self.limit_type_conditions = range(1, 51)
         self.occurred_after_type = (str, type(None))
         self.occurred_before_type = (str, type(None))
         self.offset_type = int
