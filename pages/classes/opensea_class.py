@@ -1,5 +1,6 @@
 import datetime
 import os
+import pickle
 import time
 
 import aiohttp
@@ -9,6 +10,7 @@ import json
 import logging
 import asyncio
 import pages.config.opensea_config as default
+import subprocess
 
 from typing import Optional
 from utils.utils import assertType
@@ -55,17 +57,27 @@ class Opensea:
 
         # app params
         # self.params shall be a list of dicts, each containing the key-value pair tagged to a particular url loop
+        self.endpoint = ''
         self.temp_url = ''
         self.URLs = []
-        self.endpoint = ''
         self.response_frame = pd.DataFrame()
         self.responses = []
+        self.timeout = 1200
 
     def loadAndSendPayload(self):
         """
         Loads up the requests and prepares them for asynchronous request sending
         """
-        os.system(f'python utils/async_requests.py {self.URLs}')
+
+        # serialize urls for passing it on to the async component
+        try:
+            url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
+            with open(url_filepath, 'wb') as output:
+                pickle.dump(self.URLs, output)
+        except Exception as ex:
+            raise
+        else:
+            os.system('python utils/async_requests.py')
 
     def resetAll(self):
         """
@@ -180,37 +192,31 @@ class Assets(Opensea):
 
         self.URLs.append(f'{self.endpoint}{temp}')
 
-    def parseResponse(self, timeout: int = 600):
+    def parseResponse(self):
         """
         This parses the response object obtained from loadAndSendPayload()
 
         :return:                        Complete Pandas DataFrame
         """
 
-        counter = 0
-        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+        base_filepath = os.path.join(os.getcwd(), 'data_dumps.json')
+        url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
 
-        try:
-            if os.path.exists(base_filepath):
-                with open(f'{base_filepath}', 'r') as f:
-                    data = json.load(f)
-                    self.responses = data
+        if os.path.exists(base_filepath):
+            main_list = []
+            with open(f'{base_filepath}', 'rb') as f:
+                data = json.load(f)
 
-                main_list = []
+                if data is not None:
+                    for dat in data:
+                        if 'assets' in dat:
+                            main_list.extend(dat['assets'])
+                        if 'detail' in dat:
+                            pass
 
-                for dict_item in self.responses:
-                    main_list.extend(dict_item['assets'])
-
-                self.response_frame = pd.DataFrame(data=main_list).astype(str)
-            else:
-                time.sleep(1)
-                counter += 1
-
-            if counter > timeout:
-                raise TimeoutError('Error: File cannot be created. Try again.')
-
-        except Exception as ex:
-            raise ex
+            self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            os.remove(base_filepath)
+            os.remove(url_filepath)
 
 
 class Events(Opensea):
@@ -316,37 +322,31 @@ class Events(Opensea):
 
         self.URLs.append(f'{self.endpoint}{temp}')
 
-    def parseResponse(self, timeout: int = 600):
+    def parseResponse(self):
         """
         This parses the response object obtained from loadAndSendPayload()
 
         :return:                        Complete Pandas DataFrame
         """
 
-        counter = 0
-        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+        base_filepath = os.path.join(os.getcwd(), 'data_dumps.json')
+        url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
 
-        try:
-            if os.path.exists(base_filepath):
-                with open(f'{base_filepath}', 'r') as f:
-                    data = json.load(f)
-                    self.responses = data
+        if os.path.exists(base_filepath):
+            main_list = []
+            with open(f'{base_filepath}', 'rb') as f:
+                data = json.load(f)
 
-                main_list = []
+                if data is not None:
+                    for dat in data:
+                        if 'asset_events' in dat:
+                            main_list.extend(dat['asset_events'])
+                        if 'detail' in dat:
+                            pass
 
-                for dict_item in self.responses:
-                    main_list.extend(dict_item['asset_events'])
-
-                self.response_frame = pd.DataFrame(data=main_list).astype(str)
-            else:
-                time.sleep(1)
-                counter += 1
-
-            if counter > timeout:
-                raise TimeoutError('Error: File cannot be created. Try again.')
-
-        except Exception as ex:
-            raise ex
+            self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            os.remove(base_filepath)
+            os.remove(url_filepath)
 
 
 class Collections(Opensea):
@@ -404,37 +404,31 @@ class Collections(Opensea):
 
         self.URLs.append(f'{self.endpoint}{temp}')
 
-    def parseResponse(self, timeout: int = 600):
+    def parseResponse(self):
         """
         This parses the response object obtained from loadAndSendPayload()
 
         :return:                        Complete Pandas DataFrame
         """
 
-        counter = 0
-        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+        base_filepath = os.path.join(os.getcwd(), 'data_dumps.json')
+        url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
 
-        try:
-            if os.path.exists(base_filepath):
-                with open(f'{base_filepath}', 'r') as f:
-                    data = json.load(f)
-                    self.responses = data
+        if os.path.exists(base_filepath):
+            main_list = []
+            with open(f'{base_filepath}', 'rb') as f:
+                data = json.load(f)
 
-                main_list = []
+                if data is not None:
+                    for dat in data:
+                        if dat is None:
+                            pass
+                        elif 'collections' in dat:
+                            main_list.extend(dat['collections'])
 
-                for dict_item in self.responses:
-                    main_list.extend(dict_item['collections'])
-
-                self.response_frame = pd.DataFrame(data=main_list).astype(str)
-            else:
-                time.sleep(1)
-                counter += 1
-
-            if counter > timeout:
-                raise TimeoutError('Error: File cannot be created. Try again.')
-
-        except Exception as ex:
-            raise ex
+            self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            os.remove(base_filepath)
+            os.remove(url_filepath)
 
 
 class Bundles(Opensea):
@@ -523,34 +517,28 @@ class Bundles(Opensea):
 
         self.URLs.append(f'{self.endpoint}{temp}')
 
-    def parseResponse(self, timeout: int = 600):
+    def parseResponse(self):
         """
         This parses the response object obtained from loadAndSendPayload()
 
         :return:                        Complete Pandas DataFrame
         """
 
-        counter = 0
-        base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+        base_filepath = os.path.join(os.getcwd(), 'data_dumps.json')
+        url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
 
-        try:
-            if os.path.exists(base_filepath):
-                with open(f'{base_filepath}', 'r') as f:
-                    data = json.load(f)
-                    self.responses = data
+        if os.path.exists(base_filepath):
+            main_list = []
+            with open(f'{base_filepath}', 'rb') as f:
+                data = json.load(f)
 
-                main_list = []
+                if data is not None:
+                    for dat in data:
+                        if 'bundles' in dat:
+                            main_list.extend(dat['bundles'])
+                        if 'detail' in dat:
+                            pass
 
-                for dict_item in self.responses:
-                    main_list.extend(dict_item['bundles'])
-
-                self.response_frame = pd.DataFrame(data=main_list).astype(str)
-            else:
-                time.sleep(1)
-                counter += 1
-
-            if counter > timeout:
-                raise TimeoutError('Error: File cannot be created. Try again.')
-
-        except Exception as ex:
-            raise ex
+            self.response_frame = pd.DataFrame(data=main_list).astype(str)
+            os.remove(base_filepath)
+            os.remove(url_filepath)
