@@ -14,7 +14,8 @@ def app():
     """
 
     st.title('Opensea Scraper')
-    st.markdown('This app allows you to pull data from Opensea.io.')
+    st.markdown('This app allows you to pull data from Opensea.io regarding the Assets, Events, Collections and '
+                'Bundles listed on Opensea.io\'s ')
     st.markdown('## Type of Data Retrieved')
     default.RETRIEVAL_METHOD = st.selectbox('Select Data Retrieval Type',
                                             ('Assets', 'Events', 'Collections', 'Bundles'))
