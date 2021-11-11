@@ -4,10 +4,10 @@ This is a helper script to asynchronously send requests
 
 import asyncio
 import json
+import time
 import aiohttp
-import sys
-import ast
 import os
+import pickle
 
 from asyncio import SelectorEventLoop
 
@@ -41,18 +41,18 @@ async def bound_fetch(sem, session, url):
         return await fetch(session, url)
 
 
-async def run(urls, sem_count=100):
+async def run(urls, sem_count=200):
     """
     Async main function to start the request sending
     :param urls:                    Literal representation of URLs, parsed into a list
     :param sem_count:               Number of Semaphore threads to init
     :return:                        List of responses in the JSON format
     """
-    timeout = 15
+    timeout = 1000
     tasks = []
 
     sem = asyncio.Semaphore(sem_count)
-    conn = aiohttp.TCPConnector(limit=64, ssl=False)
+    conn = aiohttp.TCPConnector()
 
     async with aiohttp.ClientSession(connector=conn) as session:
         for url in urls:
@@ -67,19 +67,20 @@ if __name__ == '__main__':
     This will run when this file is invoked with the python command on the CLI or through the app
     """
 
-    base_filepath = os.path.join(os.getcwd(), 'dumps', 'data_dumps.json')
+    url_filepath = os.path.join(os.getcwd(), 'url_dumps.pkl')
+    base_filepath = os.path.join(os.getcwd(), 'data_dumps.json')
 
-    # parse literal to list
-    urls = sys.argv[1].strip('][').split(', ')
+    # load from pickle
+    if os.path.exists(url_filepath):
+        with open(f'{url_filepath}', 'rb') as pickle_dump:
+            urls = pickle.load(pickle_dump)
 
-    # start async parallel loop
-    loop = asyncio.SelectorEventLoop()
-    data = loop.run_until_complete(run(urls))
-    data = json.dumps(data)
+        # start async parallel loop
+        loop = SelectorEventLoop()
+        data = loop.run_until_complete(run(urls))
+        data = json.dumps(data)
 
-    # dump json object into a temporary json file, saved for user reference and debugging
-    # future releases may allow user to set debug level so that the temp files will be removed after the processing is
-    # complete
-    with open(f'{base_filepath}', 'w') as f:
-        for d in data:
-            f.write(d)
+        # dump json object into a temporary json file, removed after runtime
+        with open(f'{base_filepath}', 'w') as f:
+            for d in data:
+                f.write(d)
