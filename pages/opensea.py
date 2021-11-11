@@ -211,7 +211,7 @@ def app():
             default.ADVANCED = st.checkbox('Show Advanced DataFrame Statistics', value=False)
 
         # begin the extraction process here
-        st.markdown('## Asset Retrieval\n'
+        st.markdown('## Events Retrieval\n'
                     'Ensure that the parameters you wish to pass into the class is loaded successfully.')
 
         if st.button('Proceed with Data Extraction'):
@@ -306,7 +306,7 @@ def app():
             default.ADVANCED = st.checkbox('Show Advanced DataFrame Statistics', value=False)
 
         # begin the extraction process here
-        st.markdown('## Asset Retrieval\n'
+        st.markdown('## Collections Retrieval\n'
                     'Ensure that the parameters you wish to pass into the class is loaded successfully.')
 
         if st.button('Proceed with Data Extraction'):
@@ -411,7 +411,7 @@ def app():
             default.ADVANCED = st.checkbox('Show Advanced DataFrame Statistics', value=False)
 
         # begin the extraction process here
-        st.markdown('## Asset Retrieval\n'
+        st.markdown('## Bundles Retrieval\n'
                     'Ensure that the parameters you wish to pass into the class is loaded successfully.')
 
         if st.button('Proceed with Data Extraction'):
