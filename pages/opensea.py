@@ -1,5 +1,3 @@
-import asyncio
-import aiohttp
 import streamlit as st
 import pandas as pd
 import pages.config.opensea_config as default
@@ -28,38 +26,10 @@ def app():
                     '### Scraper Behaviour')
         default.GET_ALL = st.checkbox('Scrape Maximum API Returns?', value=True)
         if not default.GET_ALL:
-            if st.checkbox('Define owner Parameter', value=False):
-                default.OWNER = st.text_input('Key in Address of Owner of Asset')
-
-            if st.checkbox('Define token_ids Parameter', value=False):
-                default.TOKEN_IDS = st.text_input('Key in Array of Token IDs to Search')
-
-            if st.checkbox('Define asset_contract_address Parameter', value=False):
-                default.ASSET_CONTRACT_ADDRESS = st.text_input('Key in NFT Contract Address for Assets of Search',
-                                                               help='Do not use asset_contract_addresses if you '
-                                                                    'are using this parameter.')
-
-            if st.checkbox('Define asset_contract_addresses Parameter', value=False):
-                default.ASSET_CONTRACT_ADDRESSES = st.text_input('Key in NFT Contract Address for Assets of Search',
-                                                                 help='Note that if you wish to key in a list into '
-                                                                      'the input box, delimit your addresses with '
-                                                                      'commas. Failure to do so or failure to '
-                                                                      'delimit properly would result in broken '
-                                                                      'queries.')
-                if len(default.ASSET_CONTRACT_ADDRESSES) != 0:
-                    st.info('Addresses Detected!')
-                else:
-                    st.warning(
-                        'Warning, No Address Detected. Proceeding in this state will result in a None value being '
-                        'passed into asset_contract_addresses parameter.')
-            if st.checkbox('Define order_by Parameter', value=False):
-                default.ORDER_BY = st.selectbox('Select Order', ('token_id', 'sale_date', 'sale_count'))
-
-            if st.checkbox('Define collection Parameter', value=False):
-                default.COLLECTION = st.text_input('Limit responses to members of a Collection')
-
-            if st.checkbox('Define API Key', value=False):
-                default.API_KEY = st.text_input('API Key')
+            default.QUERY_PARAMS = st.multiselect('Select Additional Paramters to Define',
+                                                  ('owner', 'token_ids', 'asset_contract_address',
+                                                   'asset_contract_addresses', 'order_by', 'collections',
+                                                   'API Key'))
 
             default.OFFSET = st.number_input('Offset',
                                              min_value=0,
@@ -72,6 +42,40 @@ def app():
                                             value=20)
 
             default.ORDER_DIRECTION = st.selectbox('Select Direction', ('asc', 'desc'))
+
+            if 'owner' in default.QUERY_PARAMS:
+                default.OWNER = st.text_input('Key in Address of Owner of Asset')
+
+            if 'token_ids' in default.QUERY_PARAMS:
+                default.TOKEN_IDS = st.text_input('Key in Array of Token IDs to Search')
+
+            if 'asset_contract_address' in default.QUERY_PARAMS:
+                default.ASSET_CONTRACT_ADDRESS = st.text_input('Key in NFT Contract Address for Assets of Search',
+                                                               help='Do not use asset_contract_addresses if you '
+                                                                    'are using this parameter.')
+
+            if 'asset_contract_addresses' in default.QUERY_PARAMS:
+                default.ASSET_CONTRACT_ADDRESSES = st.text_input('Key in NFT Contract Address for Assets of Search',
+                                                                 help='Note that if you wish to key in a list into '
+                                                                      'the input box, delimit your addresses with '
+                                                                      'commas. Failure to do so or failure to '
+                                                                      'delimit properly would result in broken '
+                                                                      'queries.')
+                if len(default.ASSET_CONTRACT_ADDRESSES) != 0:
+                    st.info('Addresses Detected!')
+                else:
+                    st.warning(
+                        'Warning, No Address Detected. Proceeding in this state will result in a None value being '
+                        'passed into asset_contract_addresses parameter.')
+
+            if 'order_by' in default.QUERY_PARAMS:
+                default.ORDER_BY = st.selectbox('Select Order', ('token_id', 'sale_date', 'sale_count'))
+
+            if 'collections' in default.QUERY_PARAMS:
+                default.COLLECTION = st.text_input('Limit responses to members of a Collection')
+
+            if 'API Key' in default.QUERY_PARAMS:
+                default.API_KEY = st.text_input('API Key')
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
@@ -152,43 +156,10 @@ def app():
                     '### Scraper Behaviour')
         default.GET_ALL = st.checkbox('Scrape Maximum API Returns?', value=True)
         if not default.GET_ALL:
-            if st.checkbox('Define asset_contract_addresses Parameter', value=False):
-                default.ASSET_CONTRACT_ADDRESS = st.text_input('Key in NFT Contract Address for Assets of Search',
-                                                               help='Note that if you wish to key in a list into '
-                                                                    'the input box, delimit your addresses with '
-                                                                    'commas. Failure to do so or failure to '
-                                                                    'delimit properly would result in broken '
-                                                                    'queries.')
-
-            if st.checkbox('Define collection_slug Parameter', value=False):
-                default.COLLECTION_SLUG = st.text_input('Key in the Collection Slug')
-
-            if st.checkbox('Define token_ids Parameter', value=False):
-                default.TOKEN_ID = st.text_input('Key in Token ID to Search For')
-
-            if st.checkbox('Define account_address Parameter', value=False):
-                default.ACCOUNT_ADDRESS = st.text_input('Key in Account Address to Search For')
-
-            if st.checkbox('Define event_type Parameter', value=False):
-                default.EVENT_TYPE = st.selectbox('Select Relevant event_type Parameter',
-                                                  ['created', 'successful', 'cancelled', 'bid_entered',
-                                                   'bid_withdrawn', 'transfer', 'approve'])
-
-            if st.checkbox('Define only_opensea Parameter', value=False):
-                default.ONLY_OPENSEA = st.checkbox('Input True/False Value')
-
-            if st.checkbox('Define auction_type Parameter', value=False):
-                default.AUCTION_TYPE = st.selectbox('Select Relevant auction_type Parameter',
-                                                    ['english', 'dutch', 'min-price'])
-
-            if st.checkbox('Define occurred_before Paramter', value=False):
-                default.OCCURRED_BEFORE = st.date_input('Key in Date')
-
-            if st.checkbox('Define occurred-after Parameter', value=False):
-                default.OCCURRED_AFTER = st.date_input('Key in Date')
-
-            if st.checkbox('Define API Key', value=False):
-                default.API_KEY = st.text_input('API Key')
+            default.QUERY_PARAMS = st.multiselect('Select Additional Parameters to Define',
+                                                  ('asset_contract_addresses', 'collection_slug', 'token_ids',
+                                                   'account_address', 'event_type', 'only_opensea', 'auction_type',
+                                                   'occurred_before', 'occurred_after', 'API Key'))
 
             default.OFFSET = st.number_input('Offset',
                                              min_value=0,
@@ -199,6 +170,44 @@ def app():
                                             min_value=1,
                                             max_value=50,
                                             value=20)
+
+            if 'asset_contract_addresses' in default.QUERY_PARAMS:
+                default.ASSET_CONTRACT_ADDRESS = st.text_input('Key in NFT Contract Address for Assets of Search',
+                                                               help='Note that if you wish to key in a list into '
+                                                                    'the input box, delimit your addresses with '
+                                                                    'commas. Failure to do so or failure to '
+                                                                    'delimit properly would result in broken '
+                                                                    'queries.')
+
+            if 'collection_slug' in default.QUERY_PARAMS:
+                default.COLLECTION_SLUG = st.text_input('Key in the Collection Slug')
+
+            if 'token_ids' in default.QUERY_PARAMS:
+                default.TOKEN_ID = st.text_input('Key in Token ID to Search For')
+
+            if 'account_address' in default.QUERY_PARAMS:
+                default.ACCOUNT_ADDRESS = st.text_input('Key in Account Address to Search For')
+
+            if 'event_type' in default.QUERY_PARAMS:
+                default.EVENT_TYPE = st.selectbox('Select Relevant event_type Parameter',
+                                                  ['created', 'successful', 'cancelled', 'bid_entered',
+                                                   'bid_withdrawn', 'transfer', 'approve'])
+
+            if 'only_opensea' in default.QUERY_PARAMS:
+                default.ONLY_OPENSEA = st.checkbox('Input True/False Value')
+
+            if 'auction_type' in default.QUERY_PARAMS:
+                default.AUCTION_TYPE = st.selectbox('Select Relevant auction_type Parameter',
+                                                    ['english', 'dutch', 'min-price'])
+
+            if 'occurred_before' in default.QUERY_PARAMS:
+                default.OCCURRED_BEFORE = st.date_input('Key in Date')
+
+            if 'occurred_after' in default.QUERY_PARAMS:
+                default.OCCURRED_AFTER = st.date_input('Key in Date')
+
+            if 'API Key' in default.QUERY_PARAMS:
+                default.API_KEY = st.text_input('API Key')
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
@@ -279,11 +288,8 @@ def app():
                     '### Scraper Behaviour')
         default.GET_ALL = st.checkbox('Scrape Maximum API Returns?', value=True)
         if not default.GET_ALL:
-            if st.checkbox('Define asset_owner Parameter', value=False):
-                default.ASSET_OWNER = st.text_input('Key in the Owner Name/ID')
-
-            if st.checkbox('Define API Key', value=False):
-                default.API_KEY = st.text_input('API Key')
+            default.QUERY_PARAMS = st.multiselect('Select Additional Parameters to Define',
+                                                  ('asset_owner', 'API Key'))
 
             default.OFFSET = st.number_input('Offset',
                                              min_value=0,
@@ -294,6 +300,12 @@ def app():
                                             min_value=1,
                                             max_value=50,
                                             value=20)
+
+            if 'asset_owner' in default.QUERY_PARAMS:
+                default.ASSET_OWNER = st.text_input('Key in the Owner Name/ID')
+
+            if 'API Key' in default.QUERY_PARAMS:
+                default.API_KEY = st.text_input('API Key')
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
@@ -359,18 +371,32 @@ def app():
                     '### Scraper Behaviour')
         default.GET_ALL = st.checkbox('Scrape Maximum API Returns?', value=True)
         if not default.GET_ALL:
-            if st.checkbox('Define on_sale Parameter', value=False):
+            default.QUERY_PARAMS = st.multiselect('Select Additional Parameters to Define',
+                                                  ('on_sale', 'owner', 'asset_contract_address',
+                                                   'asset_contract_addresses', 'token_ids', 'API Key'))
+
+            default.OFFSET = st.number_input('Offset',
+                                             min_value=0,
+                                             max_value=10000,
+                                             value=0)
+
+            default.LIMIT = st.number_input('Limit',
+                                            min_value=1,
+                                            max_value=50,
+                                            value=20)
+
+            if 'on_sale Parameter' in default.QUERY_PARAMS:
                 default.ON_SALE = st.checkbox('Choose True/False Option')
 
-            if st.checkbox('Define owner Parameter', value=False):
+            if 'owner' in default.QUERY_PARAMS:
                 default.OWNER = st.text_input('Key in Address of Owner of Asset')
 
-            if st.checkbox('Define asset_contract_address Parameter', value=False):
+            if 'asset_contract_address' in default.QUERY_PARAMS:
                 default.ASSET_CONTRACT_ADDRESS = st.text_input('Key in NFT Contract Address for Assets of Search',
                                                                help='Do not use asset_contract_addresses if you '
                                                                     'are using this parameter.')
 
-            if st.checkbox('Define asset_contract_addresses Parameter', value=False):
+            if 'asset_contract_addresses' in default.QUERY_PARAMS:
                 default.ASSET_CONTRACT_ADDRESSES = st.text_input('Key in NFT Contract Address for Assets of Search',
                                                                  help='Note that if you wish to key in a list into '
                                                                       'the input box, delimit your addresses with '
@@ -384,21 +410,11 @@ def app():
                         'Warning, No Address Detected. Proceeding in this state will result in a None value being '
                         'passed into asset_contract_addresses parameter.')
 
-            if st.checkbox('Define token_ids Parameter', value=False):
+            if 'token_ids' in default.QUERY_PARAMS:
                 default.TOKEN_IDS = st.text_input('Key in Array of Token IDs to Search')
 
-            if st.checkbox('Define API Key', value=False):
+            if 'API Key' in default.QUERY_PARAMS:
                 default.API_KEY = st.text_input('API Key')
-
-            default.OFFSET = st.number_input('Offset',
-                                             min_value=0,
-                                             max_value=10000,
-                                             value=0)
-
-            default.LIMIT = st.number_input('Limit',
-                                            min_value=1,
-                                            max_value=50,
-                                            value=20)
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
