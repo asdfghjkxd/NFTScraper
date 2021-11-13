@@ -332,6 +332,7 @@ def app():
                                           ('Get List of Tokens', 'Get Details of Single Token'))
 
         if default.QUERY_MODE == 'Get List of Tokens':
+            st.info('**Get List of Tokens** Mode Selected!')
             default.QUERY_PARAMS = st.multiselect('Select Parameters to Define',
                                                   ('page_size', 'next_page_token'))
 
@@ -344,6 +345,7 @@ def app():
                 default.NEXT_PAGE_TOKEN = st.text_input('Define the next page token')
 
         elif default.QUERY_MODE == 'Get Details of Single Token':
+            st.info('**Get Details of Single Token** Mode Selected!')
             default.ADDRESS = st.text_input('Define Collection contract address')
 
             if default.ADDRESS != '':
