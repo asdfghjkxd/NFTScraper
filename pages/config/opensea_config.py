@@ -19,11 +19,11 @@ ORDER_DIRECTION = 'desc'
 OWNER = None
 TOKEN_ID = None
 TOKEN_IDS = None
+
+# change any of the following to modify the behavior of the app
 RETRIEVAL_METHOD = 'Assets'
 GET_ALL = False
 ADVANCED = False
-
-# change any of the following to modify the behavior of the app
 SAVE = True
 VERBOSE = True
 VERBOSITY = 20
