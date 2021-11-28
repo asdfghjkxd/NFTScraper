@@ -29,3 +29,19 @@ VERBOSE = True
 VERBOSITY = 20
 QUERY_PARAMS = None
 ASSERT_INPUTS = False
+SAVED_OUTPUTS_ASSETS = ['name', 'description', 'external_link', 'asset_contract', 'permalink', 'collection', 'decimals',
+                        'token_metadata', 'owner', 'sell_orders', 'creator', 'traits', 'last_sale', 'top_bid',
+                        'listing_date', 'is_presale', 'transfer_fee_payment_token', 'transfer_fee']
+SAVED_OUTPUTS_EVENTS = ['event_type', 'asset', 'asset_bundle', 'created_date', 'from_account', 'to_account',
+                        'is_private', 'payment_token', 'quantity', 'total_price']
+SAVED_OUTPUTS_COLLECTIONS = ['primary_asset_contracts', 'traits', 'stats', 'banner_image_url', 'chat_url',
+                             'created_date', 'default_to_fiat', 'description', 'dev_buyer_fee_basis_points',
+                             'dev_seller_fee_basis_points', 'discord_url', 'display_data', 'external_url', 'featured',
+                             'featured_image_url', 'hidden', 'safelist_request_status', 'image_url',
+                             'is_subject_to_whitelist', 'large_image_url', 'medium_username', 'name',
+                             'only_proxied_transfers', 'opensea_buyer_fee_basis_points',
+                             'opensea_seller_fee_basis_points', 'payout_address', 'require_email', 'short_description',
+                             'slug', 'telegram_url', 'twitter_username', 'instagram_username', 'wiki_url']
+SAVED_OUTPUTS_BUNDLES = ['maker', 'slug', 'assets', 'name', 'description', 'external_link', 'asset_contract',
+                         'permalink', 'sell_orders']
+SAVED_OUTPUTS_ACTUAL = []
