@@ -79,6 +79,13 @@ def app():
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
+        if default.SAVE:
+            # allow user to do a multiselect
+            default.SAVED_OUTPUTS_ACTUAL = st.multiselect('Select the data fields to output',
+                                                          options=default.SAVED_OUTPUTS_ASSETS)
+            st.info(f'**Fields selected**: {default.SAVED_OUTPUTS_ACTUAL}')
+        else:
+            default.SAVED_OUTPUTS_ACTUAL = []
         default.VERBOSE = st.checkbox('Display Outputs?', value=False)
         if default.VERBOSE:
             default.VERBOSITY = st.number_input('Number of Datapoints to Display?',
@@ -134,6 +141,9 @@ def app():
             except Exception as ex:
                 raise ex
             else:
+                # modify the dataframe according to user input
+                asset.response_frame = asset.response_frame[default.SAVED_OUTPUTS_ACTUAL]
+
                 if default.SAVE:
                     st.markdown('### Save Data')
                     st.download_button('Download CSV',
@@ -152,6 +162,10 @@ def app():
     #                                                   Events                                                     #
     # ------------------------------------------------------------------------------------------------------------ #
     elif default.RETRIEVAL_METHOD == 'Events':
+        st.warning('WARNING: This Feature has not been successfully tested as multiple request sent to the API '
+                   'resulted in Cloudflare blocking the access of the app to the requested data. You are to '
+                   'exercise caution when using this feature or you may risk being temporarily blocked by '
+                   'Cloudflare.')
         st.markdown('## Flags\n'
                     '### Scraper Behaviour')
         default.GET_ALL = st.checkbox('Scrape Maximum API Returns?', value=True)
@@ -211,6 +225,11 @@ def app():
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
+        if default.SAVE:
+            # allow user to do a multiselect
+            default.SAVED_OUTPUTS_ACTUAL = st.multiselect('Select the data fields to output',
+                                                          options=default.SAVED_OUTPUTS_EVENTS)
+            st.info(f'**Fields selected**: {default.SAVED_OUTPUTS_ACTUAL}')
         default.VERBOSE = st.checkbox('Display Outputs?', value=False)
         if default.VERBOSE:
             default.VERBOSITY = st.number_input('Number of Datapoints to Display?',
@@ -266,6 +285,9 @@ def app():
             except Exception as ex:
                 raise ex
             else:
+                # modify the dataframe according to user input
+                events.response_frame = events.response_frame[default.SAVED_OUTPUTS_ACTUAL]
+
                 if default.SAVE:
                     st.markdown('### Save Data')
                     st.download_button('Download CSV',
@@ -309,6 +331,11 @@ def app():
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
+        if default.SAVE:
+            # allow user to do a multiselect
+            default.SAVED_OUTPUTS_ACTUAL = st.multiselect('Select the data fields to output',
+                                                          options=default.SAVED_OUTPUTS_COLLECTIONS)
+            st.info(f'**Fields selected**: {default.SAVED_OUTPUTS_ACTUAL}')
         default.VERBOSE = st.checkbox('Display Outputs?', value=False)
         if default.VERBOSE:
             default.VERBOSITY = st.number_input('Number of Datapoints to Display?',
@@ -348,6 +375,9 @@ def app():
             except Exception as ex:
                 raise ex
             else:
+                # modify the dataframe according to user input
+                collections.response_frame = collections.response_frame[default.SAVED_OUTPUTS_ACTUAL]
+
                 if default.SAVE:
                     st.markdown('### Save Data')
                     st.download_button('Download CSV',
@@ -418,6 +448,11 @@ def app():
 
         st.markdown('### App Behaviour')
         default.SAVE = st.checkbox('Save Outputs?', value=True)
+        if default.SAVE:
+            # allow user to do a multiselect
+            default.SAVED_OUTPUTS_ACTUAL = st.multiselect('Select the data fields to output',
+                                                          options=default.SAVED_OUTPUTS_BUNDLES)
+            st.info(f'**Fields selected**: {default.SAVED_OUTPUTS_ACTUAL}')
         default.VERBOSE = st.checkbox('Display Outputs?', value=False)
         if default.VERBOSE:
             default.VERBOSITY = st.number_input('Number of Datapoints to Display?',
@@ -471,6 +506,9 @@ def app():
             except Exception as ex:
                 raise ex
             else:
+                # modify the dataframe according to user input
+                bundles.response_frame = bundles.response_frame[default.SAVED_OUTPUTS_ACTUAL]
+
                 if default.SAVE:
                     st.markdown('### Save Data')
                     st.download_button('Download CSV',
