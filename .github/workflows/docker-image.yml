@@ -9,7 +9,7 @@ on:
       - v*
 
 env:
-  IMAGE_NAME: app
+  IMAGE_NAME: scrape
 
 jobs:
   push:
